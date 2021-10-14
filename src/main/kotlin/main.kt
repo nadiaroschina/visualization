@@ -8,17 +8,20 @@ import org.jetbrains.skiko.SkiaWindow
 import java.awt.Dimension
 import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionAdapter
+import java.lang.Integer.min
 import javax.swing.WindowConstants
+import kotlin.math.*
 
 enum class DiagramType(val str: String) {
     Round("round"), Histogram("histogram"), ScatterPlot("scatterplot")
 }
 
 typealias Type = String
-typealias Value = Double
-data class Element(val type: Type, val value: Value)
+typealias Value = Float
 
+data class Element(val type: Type, val value: Value)
 typealias Data = List<Element>
+
 data class Query(val diagramType: DiagramType, val data: Data)
 
 fun parseArgs(args: Array<String>): Query {
@@ -44,7 +47,10 @@ fun parseArgs(args: Array<String>): Query {
     val data = mutableListOf<Element>()
     for (i in 1 until args.size step 2) {
         val type: Type = args[i]
-        val value: Double = args[i + 1].toDoubleOrNull() ?: throw InvalidArgument(type, args[i + 1])
+        val value: Float = args[i + 1].toFloatOrNull() ?: throw InvalidArgument(type, args[i + 1])
+        if (diagramType == DiagramType.Round && value < 0) {
+            throw NegativeArgument(diagramType, type, value)
+        }
         data.add(Element(type, value))
     }
     return Query(diagramType, data)
@@ -53,9 +59,9 @@ fun parseArgs(args: Array<String>): Query {
 
 fun main(args: Array<String>) {
 
-    val query = parseArgs(args)
-    println(query.diagramType)
-    println(query.data)
+//    val query = parseArgs(args)
+//    println(query.diagramType)
+//    println(query.data)
 
     createWindow("pf-2021-viz")
 }
@@ -75,13 +81,18 @@ fun createWindow(title: String) = runBlocking(Dispatchers.Swing) {
     window.isVisible = true
 }
 
-class Renderer(val layer: SkiaLayer) : SkiaRenderer {
-    val typeface = Typeface.makeFromFile("fonts/JetBrainsMono-Regular.ttf")
-    val font = Font(typeface, 40f)
-    val paint = Paint().apply {
-        color = 0xff9BC730L.toInt()
+class Renderer(private val layer: SkiaLayer) : SkiaRenderer {
+    private val typeface = Typeface.makeFromName("Times New Roman", FontStyle.NORMAL)
+    private val font = Font(typeface, 16f)
+    private val mainPaint = Paint().apply {
+        color = 0xff22D6E5.toInt()
+        mode = PaintMode.STROKE
+        strokeWidth = 2f
+    }
+    private val textPaint = Paint().apply {
+        color = 0xff082B82.toInt()
         mode = PaintMode.FILL
-        strokeWidth = 1f
+        strokeWidth = 2f
     }
 
     override fun onRender(canvas: Canvas, width: Int, height: Int, nanoTime: Long) {
@@ -90,10 +101,94 @@ class Renderer(val layer: SkiaLayer) : SkiaRenderer {
         val w = (width / contentScale).toInt()
         val h = (height / contentScale).toInt()
 
-        // РИСОВАНИЕ
+        roundDiagram(
+            canvas,
+            listOf(
+                Element("apples", 30.0f),
+                Element("oranges", 30.0f),
+                Element("bananas", 40.0f)
+            ),
+            w, h
+        )
 
         layer.needRedraw()
     }
+
+    // draws a round diagram
+    private fun roundDiagram(canvas: Canvas, data: Data, width: Int, height: Int) {
+        // drawing the circle
+        val eps = 30F
+        val centerX = width / 2f
+        val centerY = height / 2f
+        val radius = min(width, height) / 4f - eps
+        canvas.drawCircle(centerX, centerY, radius, mainPaint)
+
+        // calculating sum of all values
+        val count = data.size
+        var sumVal = 0f
+        data.forEach {
+            sumVal += it.value
+        }
+
+        // drawing the diagram itself
+        var angle = 0.5 * Math.PI    // stores the angle of the right bound of current sector
+        var fillPaint = Paint().apply {
+            color = 0xff9BC730L.toInt() // green
+            mode = PaintMode.FILL
+            strokeWidth = 2f
+        } // changing color depending on sector size todo
+        data.forEach {
+            val size = it.value / sumVal    // current size of the sector in percentages
+            val delta = size * 2 * Math.PI    // current turning angle
+
+            // writing text
+            writeInSector(canvas, centerX, centerY, (angle - delta / 2).toFloat(), radius, it)
+
+            // filling sector - todo
+
+            //drawing radius
+            drawRadius(canvas, centerX, centerY, (angle - delta).toFloat(), radius)
+
+            angle -= delta
+        }
+
+    }
+
+    private fun drawRadius(
+        canvas: Canvas, centerX: Float, centerY: Float,
+        angle: Float, radius: Float
+    ) {
+        canvas.drawLine(
+            centerX,
+            centerY,
+            centerX + radius * cos(angle),
+            centerY - radius * sin(angle),
+            mainPaint
+        )
+    }
+
+
+    private fun writeInSector(
+        canvas: Canvas, centerX: Float, centerY: Float,
+        angle: Float, radius: Float, element: Element
+    ) {
+        val eps = 2 * font.size
+        canvas.drawString(
+            element.type,
+            centerX - eps + (radius * 1.5f) * cos(angle),
+            centerY - (radius * 1.5f) * sin(angle),
+            font,
+            textPaint
+        )
+        canvas.drawString(
+            element.value.toString(),
+            centerX - eps + (radius * 1.5f) * cos(angle),
+            centerY - (radius * 1.5f) * sin(angle) + eps,
+            font,
+            textPaint
+        )
+    }
+
 }
 
 object State {
