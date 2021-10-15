@@ -1,9 +1,7 @@
 import org.jetbrains.skija.*
 import org.jetbrains.skiko.SkiaLayer
 import org.jetbrains.skiko.SkiaRenderer
-import org.jetbrains.skiko.toBufferedImage
 import java.io.File
-import javax.imageio.ImageIO
 import kotlin.math.*
 
 fun degreesToRadians(x: Float): Float {
@@ -17,16 +15,18 @@ fun radiansToDegrees(x: Float): Float {
 class Renderer(private val layer: SkiaLayer) : SkiaRenderer {
     private val typeface = Typeface.makeFromName("Courier", FontStyle.NORMAL)
     private val font = Font(typeface, 16f)
+
     private val mainPaint = Paint().apply {
-        color = 0xff082B82.toInt() // dark blue
-        mode = PaintMode.STROKE_AND_FILL
-        strokeWidth = 2f
-    }
-    private val textPaint = Paint().apply {
         color = 0xff082B82.toInt()  // dark blue
         mode = PaintMode.FILL
         strokeWidth = 2f
     }
+    private val strokePaint = Paint().apply {
+        color = 0xff082B82.toInt()  // dark blue
+        mode = PaintMode.STROKE
+        strokeWidth = 2f
+    }
+
     var data: Data = emptyList()
     var diagramType: DiagramType? = null
     var file: File? = null
@@ -56,7 +56,7 @@ class Renderer(private val layer: SkiaLayer) : SkiaRenderer {
         val radius = Integer.min(width, height) / 2f - eps
 
         // drawing the circle
-        canvas.drawCircle(centerX, centerY, radius, mainPaint)
+        canvas.drawCircle(centerX, centerY, radius, strokePaint)
 
         // calculating sum of all values
         var sumVal = 0f
@@ -66,9 +66,9 @@ class Renderer(private val layer: SkiaLayer) : SkiaRenderer {
 
         // drawing the diagram itself
         var angleRad = 0.5 * Math.PI    // stores the angle of the right bound of current sector in radians
-        val fillPaint = Paint().apply {
-            color = 0xff9BC730L.toInt() // green
-            mode = PaintMode.STROKE_AND_FILL
+        val currPaint = Paint().apply {
+            color = 0xf00000000.toInt()
+            mode = PaintMode.FILL
             strokeWidth = 2f
         }
 
@@ -76,17 +76,23 @@ class Renderer(private val layer: SkiaLayer) : SkiaRenderer {
             val size = it.value / sumVal    //  size of sector in percentages
             val deltaRad = size * 2 * Math.PI    //  turning angle in radians
 
-            // writing text
-            writeInSector(canvas, centerX, centerY, (angleRad + deltaRad / 2).toFloat(), radius, it)
-
             // filling sector
-            fillPaint.color = ((it.value / sumVal) * 100000 + 0x80ff0000.toInt()).toInt()
+            currPaint.color = ((it.value / sumVal) * 100000 + 0x80ff0000.toInt()).toInt()
             canvas.drawArc(
                 centerX - radius, centerY - radius,
                 centerX + radius, centerY + radius,
                 radiansToDegrees(-angleRad.toFloat()), radiansToDegrees(-deltaRad.toFloat()),
-                true, fillPaint
+                true, currPaint
             )
+            // drawing separator line
+            canvas.drawLine(
+                centerX, centerY,
+                centerX + radius * cos(angleRad).toFloat(), centerY - radius * sin(angleRad).toFloat(),
+                mainPaint
+            )
+
+            // writing text
+            writeInSector(canvas, centerX, centerY, (angleRad + deltaRad / 2).toFloat(), radius, it, mainPaint)
 
             angleRad += deltaRad
         }
@@ -96,7 +102,8 @@ class Renderer(private val layer: SkiaLayer) : SkiaRenderer {
 
     private fun writeInSector(
         canvas: Canvas, centerX: Float, centerY: Float,
-        angle: Float, radius: Float, element: Element
+        angle: Float, radius: Float, element: Element,
+        paint: Paint
     ) {
         val eps = 1f * font.size
         val textEps = (font.size * element.type.length) / 4
@@ -105,14 +112,14 @@ class Renderer(private val layer: SkiaLayer) : SkiaRenderer {
             centerX - textEps + (radius * 0.5f) * cos(angle),
             centerY - (radius * 0.5f) * sin(angle),
             font,
-            textPaint
+            paint
         )
         canvas.drawString(
             element.value.toString(),
             centerX - textEps + (radius * 0.5f) * cos(angle),
             centerY - (radius * 0.5f) * sin(angle) + eps,
             font,
-            textPaint
+            paint
         )
     }
 
@@ -152,20 +159,20 @@ class Renderer(private val layer: SkiaLayer) : SkiaRenderer {
             val value = (ind * rangeY) / scalesCount
             val y = zeroY - (ind * (height - 2 * bigEps)) / scalesCount
             canvas.drawLine(bigEps - d1, y, bigEps, y, mainPaint)
-            canvas.drawString(value.toString(), smallEps, y, scaleFont, textPaint)
+            canvas.drawString(String.format("%.1f", value), smallEps, y, scaleFont, mainPaint)
         }
         for (ind in 1..floor(scalesCount * abs(minVal) / rangeY).toInt()) {
             val value = -(ind * rangeY) / scalesCount
             val y = zeroY + (ind * (height - 2 * bigEps)) / scalesCount
             canvas.drawLine(bigEps - d1, y, bigEps, y, mainPaint)
-            canvas.drawString(value.toString(), smallEps, y, scaleFont, textPaint)
+            canvas.drawString(String.format("%.1f", value), smallEps, y, scaleFont, mainPaint)
         }
 
 
         // drawing rectangles to match values
         var left = bigEps + smallEps
         var right = bigEps + sizeX - smallEps
-        val fillPaint = Paint().apply {
+        val currPaint = Paint().apply {
             color = 0x80000000.toInt() // green
             mode = PaintMode.FILL
             strokeWidth = 2f
@@ -179,27 +186,27 @@ class Renderer(private val layer: SkiaLayer) : SkiaRenderer {
             }
 
             // adjusting the color
-            fillPaint.color = ((it.value / rangeY) * 10000 + 0x80ff0000.toInt()).toInt()
+            currPaint.color = ((it.value / rangeY) * 10000 + 0x80ff0000.toInt()).toInt()
 
             val rect = Rect(left, max(y, zeroY), right, min(y, zeroY))
-            canvas.drawRect(rect, fillPaint)
+            canvas.drawRect(rect, currPaint)
 
             // adding text
             val textEps = font.size
             val textX = left + smallEps
             val textY = zeroY + textEps * (it.value.sign)
-            canvas.drawString(it.type, textX, textY, font, textPaint)
+            canvas.drawString(it.type, textX, textY, font, mainPaint)
 
             // moving to the next rectangle
             left += sizeX
             right += sizeX
         }
-
-
     }
 
-    private fun scatterplot(canvas: Canvas, width: Int, height: Int) {
-        // TODO: 15.10.2021
-    }
 
 }
+
+private fun scatterplot(canvas: Canvas, width: Int, height: Int) {
+    // TODO: 15.10.2021
+}
+
