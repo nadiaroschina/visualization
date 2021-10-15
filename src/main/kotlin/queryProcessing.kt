@@ -1,4 +1,6 @@
-data class Query(val diagramType: DiagramType, val data: Data)
+import java.io.File
+
+data class Query(val diagramType: DiagramType, val data: Data, val file: File)
 
 fun parseArgs(args: Array<String>): Query {
     if (args.isEmpty()) {
@@ -15,13 +17,13 @@ fun parseArgs(args: Array<String>): Query {
         throw UnsupportedDiagram(diagramName)
     }
     if (args.size == 1) {
-        throw NoArguments()
+        throw NotEnoughArguments()
     }
-    if (args.size % 2 == 0) {
+    if (args.size % 2 == 1) {
         throw InvalidArgumentsNumber()
     }
     val data = mutableListOf<Element>()
-    for (i in 1 until args.size step 2) {
+    for (i in 1 until args.size - 1 step 2) {
         val type: Type = args[i]
         val value: Float = args[i + 1].toFloatOrNull() ?: throw InvalidArgument(type, args[i + 1])
         if (diagramType == DiagramType.Round && value < 0) {
@@ -29,5 +31,11 @@ fun parseArgs(args: Array<String>): Query {
         }
         data.add(Element(type, value))
     }
-    return Query(diagramType, data)
+
+    val fileName = args[args.size - 1]
+    val file = File(fileName)
+    if (!file.exists()) {
+        file.createNewFile()
+    }
+    return Query(diagramType, data, file)
 }
