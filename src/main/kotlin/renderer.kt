@@ -55,14 +55,13 @@ class Renderer(private val layer: SkiaLayer) : SkiaRenderer {
         canvas.drawCircle(centerX, centerY, radius, mainPaint)
 
         // calculating sum of all values
-        val count = data.size
         var sumVal = 0f
         data.forEach {
             sumVal += it.value
         }
 
         // drawing the diagram itself
-        var angle = 0.5 * Math.PI    // stores the angle of the right bound of current sector
+        var angleRad = 0.5 * Math.PI    // stores the angle of the right bound of current sector in radians
         val fillPaint = Paint().apply {
             color = 0xff9BC730L.toInt() // green
             mode = PaintMode.STROKE_AND_FILL
@@ -71,25 +70,21 @@ class Renderer(private val layer: SkiaLayer) : SkiaRenderer {
 
         data.forEach {
             val size = it.value / sumVal    //  size of sector in percentages
-            val delta = size * 2 * Math.PI    //  turning angle
+            val deltaRad = size * 2 * Math.PI    //  turning angle in radians
 
             // writing text
-            writeInSector(canvas, centerX, centerY, (angle - delta / 2).toFloat(), radius, it)
+            writeInSector(canvas, centerX, centerY, (angleRad + deltaRad / 2).toFloat(), radius, it)
 
             // filling sector
             fillPaint.color = ((it.value / sumVal) * 100000 + 0x80ff0000.toInt()).toInt()
-//            canvas.drawArc(
-//                centerX - radius, centerY - radius,
-//                centerX + radius, centerY + radius,
-//                radiansToDegrees(angle.toFloat()) + 180, radiansToDegrees(delta.toFloat()),
-//                true, fillPaint
-//            )
-            // TODO: 15.10.2021  
+            canvas.drawArc(
+                centerX - radius, centerY - radius,
+                centerX + radius, centerY + radius,
+                radiansToDegrees(-angleRad.toFloat()), radiansToDegrees(-deltaRad.toFloat()),
+                true, fillPaint
+            )
 
-            //drawing radius
-            //canvas.drawLine(centerX, centerY, centerX + cos(angle))
-
-            angle -= delta
+            angleRad += deltaRad
         }
 
     }
@@ -100,17 +95,17 @@ class Renderer(private val layer: SkiaLayer) : SkiaRenderer {
         angle: Float, radius: Float, element: Element
     ) {
         val eps = 1f * font.size
-        val dx = (font.size * element.type.length) / 4
+        val textEps = (font.size * element.type.length) / 4
         canvas.drawString(
             element.type,
-            centerX - dx + (radius * 0.5f) * cos(angle),
+            centerX - textEps + (radius * 0.5f) * cos(angle),
             centerY - (radius * 0.5f) * sin(angle),
             font,
             textPaint
         )
         canvas.drawString(
             element.value.toString(),
-            centerX - dx + (radius * 0.5f) * cos(angle),
+            centerX - textEps + (radius * 0.5f) * cos(angle),
             centerY - (radius * 0.5f) * sin(angle) + eps,
             font,
             textPaint
