@@ -16,7 +16,7 @@ class Renderer(private val layer: SkiaLayer) : SkiaRenderer {
     private val font = Font(typeface, 16f)
     private val mainPaint = Paint().apply {
         color = 0xff082B82.toInt() // dark blue
-        mode = PaintMode.STROKE
+        mode = PaintMode.STROKE_AND_FILL
         strokeWidth = 2f
     }
     private val textPaint = Paint().apply {
@@ -116,7 +116,7 @@ class Renderer(private val layer: SkiaLayer) : SkiaRenderer {
     private fun histogram(canvas: Canvas, width: Int, height: Int) {
 
         // determining boundaries
-        val bigEps = 40f
+        val bigEps = 60f
         val smallEps = 10f
 
         // max and min values in data
@@ -132,8 +132,30 @@ class Renderer(private val layer: SkiaLayer) : SkiaRenderer {
         val sizeX = (width - 2 * bigEps) / data.size    // rectangle length
 
         // Ox and Oy lines
-        canvas.drawLine(bigEps, zeroY, width - bigEps, zeroY, mainPaint)
-        canvas.drawLine(bigEps, bigEps, bigEps, height - bigEps, mainPaint)
+        canvas.drawLine(bigEps / 2, zeroY, width - bigEps / 2, zeroY, mainPaint)
+        canvas.drawLine(bigEps, bigEps / 2, bigEps, height - bigEps / 2, mainPaint)
+        // little triangles on them
+        val d1 = 7f
+        val d2 = 15f
+        canvas.drawLine(bigEps - d1, bigEps / 2 + d2, bigEps, bigEps / 2, mainPaint)
+        canvas.drawLine(bigEps + d1, bigEps / 2 + d2, bigEps, bigEps / 2, mainPaint)
+        canvas.drawLine(width - bigEps / 2 - d2, zeroY - d1, width - bigEps / 2, zeroY, mainPaint)
+        canvas.drawLine(width - bigEps / 2 - d2, zeroY + d1, width - bigEps / 2, zeroY, mainPaint)
+        // scale on Oy
+        val scalesCount = 10
+        val scaleFont = Font(typeface, 12f)
+        for (ind in 0..floor(scalesCount * maxVal / rangeY).toInt()) {
+            val value = (ind * rangeY) / scalesCount
+            val y = zeroY - (ind * (height - 2 * bigEps)) / scalesCount
+            canvas.drawLine(bigEps - d1, y, bigEps, y, mainPaint)
+            canvas.drawString(value.toString(), smallEps, y, scaleFont, textPaint)
+        }
+        for (ind in 1..floor(scalesCount * abs(minVal) / rangeY).toInt()) {
+            val value = -(ind * rangeY) / scalesCount
+            val y = zeroY + (ind * (height - 2 * bigEps)) / scalesCount
+            canvas.drawLine(bigEps - d1, y, bigEps, y, mainPaint)
+            canvas.drawString(value.toString(), smallEps, y, scaleFont, textPaint)
+        }
 
 
         // drawing rectangles to match values

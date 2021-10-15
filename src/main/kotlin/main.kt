@@ -39,8 +39,8 @@ fun createWindow(title: String, diagramType: DiagramType, data: Data) = runBlock
 
     window.layer.addMouseMotionListener(MyMouseMotionAdapter)
 
-    window.preferredSize = Dimension(800, 800)
-    window.minimumSize = Dimension(100, 100)
+    window.preferredSize = Dimension(600, 600)
+    window.minimumSize = Dimension(200, 200)
     window.pack()
     window.layer.awaitRedraw()
     window.isVisible = true
