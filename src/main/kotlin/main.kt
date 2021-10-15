@@ -2,9 +2,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.swing.Swing
 import org.jetbrains.skiko.SkiaWindow
+import org.jetbrains.skiko.toBufferedImage
 import java.awt.Dimension
 import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionAdapter
+import java.io.File
+import javax.imageio.ImageIO
 import javax.swing.WindowConstants
 
 
@@ -25,10 +28,10 @@ fun main(args: Array<String>) {
     val query = parseArgs(args)
 
     // window
-    createWindow("pf-2021-viz", query.diagramType, query.data)
+    createWindow("pf-2021-viz", query.diagramType, query.data, query.file)
 }
 
-fun createWindow(title: String, diagramType: DiagramType, data: Data) = runBlocking(Dispatchers.Swing) {
+fun createWindow(title: String, diagramType: DiagramType, data: Data, file: File) = runBlocking(Dispatchers.Swing) {
     val window = SkiaWindow()
     window.defaultCloseOperation = WindowConstants.DISPOSE_ON_CLOSE
     window.title = title
@@ -36,6 +39,7 @@ fun createWindow(title: String, diagramType: DiagramType, data: Data) = runBlock
     window.layer.renderer = Renderer(window.layer)
     (window.layer.renderer as Renderer).data = data
     (window.layer.renderer as Renderer).diagramType = diagramType
+    (window.layer.renderer as Renderer).file = file
 
     window.layer.addMouseMotionListener(MyMouseMotionAdapter)
 
@@ -44,6 +48,10 @@ fun createWindow(title: String, diagramType: DiagramType, data: Data) = runBlock
     window.pack()
     window.layer.awaitRedraw()
     window.isVisible = true
+
+    val bitImage = window.layer.screenshot()
+    val image = bitImage?.toBufferedImage()
+    ImageIO.write(image, "png", file)
 }
 
 

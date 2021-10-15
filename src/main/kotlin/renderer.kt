@@ -1,6 +1,9 @@
 import org.jetbrains.skija.*
 import org.jetbrains.skiko.SkiaLayer
 import org.jetbrains.skiko.SkiaRenderer
+import org.jetbrains.skiko.toBufferedImage
+import java.io.File
+import javax.imageio.ImageIO
 import kotlin.math.*
 
 fun degreesToRadians(x: Float): Float {
@@ -26,6 +29,7 @@ class Renderer(private val layer: SkiaLayer) : SkiaRenderer {
     }
     var data: Data = emptyList()
     var diagramType: DiagramType? = null
+    var file: File? = null
 
     override fun onRender(canvas: Canvas, width: Int, height: Int, nanoTime: Long) {
         val contentScale = layer.contentScale
