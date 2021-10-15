@@ -11,17 +11,6 @@ import javax.imageio.ImageIO
 import javax.swing.WindowConstants
 
 
-enum class DiagramType(val str: String) {
-    Round("round"), Histogram("histogram"), ScatterPlot("scatterplot")
-}
-
-typealias Type = String
-typealias Value = Float
-
-data class Element(val type: Type, val value: Value)
-typealias Data = List<Element>
-
-
 fun main(args: Array<String>) {
 
     // processing input

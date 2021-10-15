@@ -1,5 +1,15 @@
 import java.io.File
 
+enum class DiagramType(val str: String) {
+    Round("round"), Histogram("histogram"), ScatterPlot("scatterplot")
+}
+
+typealias Type = String
+typealias Value = Float
+
+data class Element(val type: Type, val value: Value)
+typealias Data = List<Element>
+
 data class Query(val diagramType: DiagramType, val data: Data, val file: File)
 
 fun parseArgs(args: Array<String>): Query {
