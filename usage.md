@@ -15,15 +15,13 @@
 или маленьком окне возможны наложения. 
 
 Программа поддерживает работу с действительными числовыми 
-значениями. Дробная часть должна отделяться запятой.
+значениями. Дробная часть должна отделяться точкой.
 Последний аргумент должен содержать
 имя PNG-файла для сохранения результата.
 
 Программа нарисует диаграмму в графическом окне 
 и сохранит результат в указанный файл (если файл не существует,
 то создастся новый).
-
-При каких-либо ошибках программа выбросит соответствующие исключения.
 
 #### Гистограмма
 ```
@@ -39,5 +37,33 @@ $ viz round apples 78.3 grapes 101.4 oranges 24.4 plums 180.3 src/data/round1.pn
 ```
 ![](src/data/round1.png)
 
+При вызове команды `round` с отрицательными значениями программа выбросит соответствующее исключение.
+```
+$ viz round carrots 10 bananas -10 src/data/round2.png
+```
+
+```Exception in thread "main" NegativeArgument: 
+value of bananas expected to be a positive number in Round diagram type, but was -10.0
+```
+
 #### Диаграмма рассеивания
-В диаграмме рассеивания 
+
+### Обработка ошибок
+При каких-либо ошибках (нехватке аргументов, несоответствии типов аргументов)
+программа выбросит соответствующие исключения.
+
+```
+$ viz
+$ viz oval
+$ viz oval cookies 78 src/tmp/path1.jpg
+$ viz scatterplot 75.5 13 
+$ viz round banana eggs src/tmp/path1.jpg
+```
+
+```
+Exception in thread "main" EmptyQuery: empty query
+Exception in thread "main" NotEnoughArguments: expected diagram type, parameters and file name
+Exception in thread "main" UnsupportedDiagram: diagram type "oval" is not supported
+Exception in thread "main" InvalidArgumentsNumber: expected diagram type, parameters and file name
+Exception in thread "main" InvalidArgument: value of banana expected to be a number, but was eggs
+```

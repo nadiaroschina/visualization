@@ -16,6 +16,9 @@ fun parseArgs(args: Array<String>): Query {
     if (args.isEmpty()) {
         throw EmptyQuery()
     }
+    if (args.size <= 2) {
+        throw NotEnoughArguments()
+    }
     val diagramName = args[0]
     var diagramType: DiagramType? = null
     for (type in DiagramType.values()) {
@@ -25,9 +28,6 @@ fun parseArgs(args: Array<String>): Query {
     }
     if (diagramType == null) {
         throw UnsupportedDiagram(diagramName)
-    }
-    if (args.size == 1) {
-        throw NotEnoughArguments()
     }
     if (args.size % 2 == 1) {
         throw InvalidArgumentsNumber()
