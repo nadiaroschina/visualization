@@ -49,4 +49,28 @@ internal class TestQuery {
         tmpFile.deleteRecursively()
     }
 
+    @Test
+    fun testHistogram1() {
+        val tmpFile = File("src/data/tmp.png")
+        val query = Query(
+            DiagramType.Histogram,
+            listOf(
+                Element("daisies", 87.9f), Element("peonies", -60.0f),
+                Element("lilies", 20.0f), Element("roses",  12.9f),
+                Element("asters", 28.5f)
+            ),
+            tmpFile
+        )
+        createWindow("test", query.diagramType, query.data, query.file)
+
+        val realFile = File("src/data/histo1.png")
+
+        val realImage = ImageIO.read(realFile).toImage().encodeToData()
+        val tmpImage = ImageIO.read(tmpFile).toImage().encodeToData()
+
+        assertEquals(realImage, tmpImage)
+
+        tmpFile.deleteRecursively()
+    }
+
 }
