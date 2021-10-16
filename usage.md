@@ -33,7 +33,7 @@ $ viz histogram daisies 87.9 peonies -60.0 lilies 20.0 roses 12.9 asters 28.5 sr
 Числовые значения для рисовки круговой диаграммы должны быть
 положительные.
 ```
-$ viz round apples 78.3 grapes 101.4 oranges 24.4 plums 180.3 src/data/round1.png
+$ viz round apples 78.3 grapes 101.4 oranges 44.4 plums 180.3 src/data/round1.png
 ```
 ![](src/data/round1.png)
 
