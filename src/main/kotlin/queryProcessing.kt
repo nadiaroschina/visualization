@@ -1,7 +1,17 @@
 import java.io.File
 
 enum class DiagramType(val str: String) {
-    Round("round"), Histogram("histogram"), ScatterPlot("scatterplot")
+    Round("round"), Histogram("histogram"), ScatterPlot("scatterplot");
+    companion object {
+        fun getTypeByName(diagramName: String) : DiagramType {
+            for (type in values()) {
+                if (diagramName == type.str) {
+                    return type
+                }
+            }
+            throw UnsupportedDiagram(diagramName)
+        }
+    }
 }
 
 typealias Type = String
@@ -19,16 +29,9 @@ fun parseArgs(args: Array<String>): Query {
     if (args.size <= 2) {
         throw NotEnoughArguments()
     }
-    val diagramName = args[0]
-    var diagramType: DiagramType? = null
-    for (type in DiagramType.values()) {
-        if (diagramName == type.str) {
-            diagramType = type
-        }
-    }
-    if (diagramType == null) {
-        throw UnsupportedDiagram(diagramName)
-    }
+
+    val diagramType = DiagramType.getTypeByName(args[0])
+
     if (args.size % 2 == 1) {
         throw InvalidArgumentsNumber()
     }
