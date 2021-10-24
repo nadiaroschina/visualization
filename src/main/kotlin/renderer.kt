@@ -50,7 +50,7 @@ class Renderer(private val layer: SkiaLayer) : SkiaRenderer {
     private fun roundDiagram(canvas: Canvas, width: Int, height: Int) {
 
         // determining parameters
-        val eps = 30F
+        val eps = min(width, height) / 20
         val centerX = width / 2f
         val centerY = height / 2f
         val radius = Integer.min(width, height) / 2f - eps
@@ -127,8 +127,8 @@ class Renderer(private val layer: SkiaLayer) : SkiaRenderer {
     private fun histogram(canvas: Canvas, width: Int, height: Int) {
 
         // determining boundaries
-        val bigEps = 60f
-        val smallEps = 10f
+        val bigEps = min(width, height) / 10f
+        val smallEps = min(width, height) / 60f
 
         // max and min values in data
         var maxVal = 0f
