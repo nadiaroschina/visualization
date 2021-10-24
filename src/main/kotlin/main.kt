@@ -17,18 +17,15 @@ fun main(args: Array<String>) {
     val query = parseArgs(args)
 
     // window
-    createWindow("pf-2021-viz", query.diagramType, query.data, query.file)
+    createWindow("pf-2021-viz", query)
 }
 
-fun createWindow(title: String, diagramType: DiagramType, data: Data, file: File) = runBlocking(Dispatchers.Swing) {
+fun createWindow(title: String, query: Query) = runBlocking(Dispatchers.Swing) {
     val window = SkiaWindow()
     window.defaultCloseOperation = WindowConstants.DISPOSE_ON_CLOSE
     window.title = title
 
-    window.layer.renderer = Renderer(window.layer)
-    (window.layer.renderer as Renderer).data = data
-    (window.layer.renderer as Renderer).diagramType = diagramType
-    (window.layer.renderer as Renderer).file = file
+    applyData(window, query)
 
     window.layer.addMouseMotionListener(MyMouseMotionAdapter)
 
@@ -40,7 +37,15 @@ fun createWindow(title: String, diagramType: DiagramType, data: Data, file: File
 
     val bitImage = window.layer.screenshot()
     val image = bitImage?.toBufferedImage()
-    ImageIO.write(image, "png", file)
+    ImageIO.write(image, "png", query.file)
+}
+
+fun applyData(window: SkiaWindow, query: Query) {
+    val renderer = Renderer(window.layer)
+    renderer.data = query.data
+    renderer.diagramType = query.diagramType
+    renderer.file = query.file
+    window.layer.renderer = renderer
 }
 
 

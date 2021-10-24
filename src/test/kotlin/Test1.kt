@@ -37,7 +37,7 @@ internal class TestQuery {
             ),
             tmpFile
         )
-        createWindow("test", query.diagramType, query.data, query.file)
+        createWindow("test", query)
 
         val realFile = File("src/data/round1.png")
 
@@ -61,7 +61,7 @@ internal class TestQuery {
             ),
             tmpFile
         )
-        createWindow("test", query.diagramType, query.data, query.file)
+        createWindow("test", query)
 
         val realFile = File("src/data/histo1.png")
 
