@@ -67,17 +67,17 @@ class Renderer(private val layer: SkiaLayer) : SkiaRenderer {
         // drawing the diagram itself
         var angleRad = 0.5 * Math.PI    // stores the angle of the right bound of current sector in radians
         val currPaint = Paint().apply {
-            color = 0xf00000000.toInt()
+            color = 0x808f0000.toInt()
             mode = PaintMode.FILL
             strokeWidth = 2f
         }
 
-        data.forEach {
-            val size = it.value / sumVal    //  size of sector in percentages
+        data.forEachIndexed { ind, element ->
+            val size = element.value / sumVal    //  size of sector in percentages
             val deltaRad = size * 2 * Math.PI    //  turning angle in radians
 
             // filling sector
-            currPaint.color = ((it.value / sumVal) * 100000 + 0x80ff0000.toInt()).toInt()
+            currPaint.color += (1000000 * ind) / data.size
             canvas.drawArc(
                 centerX - radius, centerY - radius,
                 centerX + radius, centerY + radius,
@@ -92,7 +92,7 @@ class Renderer(private val layer: SkiaLayer) : SkiaRenderer {
             )
 
             // writing text
-            writeInSector(canvas, centerX, centerY, (angleRad + deltaRad / 2).toFloat(), radius, it, mainPaint)
+            writeInSector(canvas, centerX, centerY, (angleRad + deltaRad / 2).toFloat(), radius, element, mainPaint)
 
             angleRad += deltaRad
         }
@@ -173,20 +173,20 @@ class Renderer(private val layer: SkiaLayer) : SkiaRenderer {
         var left = bigEps + smallEps
         var right = bigEps + sizeX - smallEps
         val currPaint = Paint().apply {
-            color = 0x80000000.toInt() // green
+            color = 0x808f0000.toInt()
             mode = PaintMode.FILL
             strokeWidth = 2f
         }
-        data.forEach {
+        data.forEachIndexed {ind, element ->
             // determining top/bottom coordinate
-            val y = if (it.value > 0) {
-                zeroY - (height - 2 * bigEps) * (it.value / rangeY)
+            val y = if (element.value > 0) {
+                zeroY - (height - 2 * bigEps) * (element.value / rangeY)
             } else {
-                zeroY + (height - 2 * bigEps) * (abs(it.value) / rangeY)
+                zeroY + (height - 2 * bigEps) * (abs(element.value) / rangeY)
             }
 
             // adjusting the color
-            currPaint.color = ((it.value / rangeY) * 10000 + 0x80ff0000.toInt()).toInt()
+            currPaint.color += (1000000 * ind) / data.size
 
             val rect = Rect(left, max(y, zeroY), right, min(y, zeroY))
             canvas.drawRect(rect, currPaint)
@@ -194,8 +194,8 @@ class Renderer(private val layer: SkiaLayer) : SkiaRenderer {
             // adding text
             val textEps = font.size
             val textX = left + smallEps
-            val textY = zeroY + textEps * (it.value.sign)
-            canvas.drawString(it.type, textX, textY, font, mainPaint)
+            val textY = zeroY + textEps * (element.value.sign)
+            canvas.drawString(element.type, textX, textY, font, mainPaint)
 
             // moving to the next rectangle
             left += sizeX
